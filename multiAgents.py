@@ -181,8 +181,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
     """
-    myDepth = 1
-
+    myDepth = 0
+    nodeChecks = 0
     def getAction(self, gameState):
         """
           Returns the minimax action from the current gameState using self.depth
@@ -211,53 +211,139 @@ class MinimaxAgent(MultiAgentSearchAgent):
             myDepth += 1
             return max(map(getAction, generateSuccessor(gameState, 
         """
-         
+
+        """
+        if self.terminalTest(gameState):
+            return None
+        #print "get action called"
+        self.myDepth = 0
         
         actions = gameState.getLegalActions(0)
-        maxIndex = 0
+        #print "first list of actions: ", actions
+        maxIndex = -1
 
-        maxUtil = self.minimax(1, gameState.generateSuccessor(0, actions[0]))
-        
-        for i in range(1, len(actions)):
-            newUtil = self.minimax(1, gameState.generateSuccessor(0,actions[i]))
+        maxUtil = -99999999
+        #print "first minimax completed"
+        for i in range(0, len(actions)):
+            newUtil = self.minimax(self.nextAgent(0, gameState), gameState.generateSuccessor(0,actions[i]))
+            print "ive finished one branch"
             if newUtil > maxUtil:
                 maxIndex = i
                 maxUtil = newUtil
+
+
+
+        "ive returned an action"
+        if maxIndex > -1:
+            #print "max action: ", actions[maxIndex]
+        
+            return actions[maxIndex]
+        
+        
+        else:
+            print "index is -1"
+            return None
+        """
+        myPly = 0
+        actions = gameState.getLegalActions(0)
+        maxIndex = -1
+        maxUtil = -99999
+        if len(actions) == 1:
+            return actions[0]
+        else:
+            for i in range(0,len(actions)):
+                newState = gameState.generateSuccessor(0, actions[i])
+                utility = self.minimax2(1,newState,1)
+                print "various utility: ",utility,"various action: ",actions[i]
+                if utility > maxUtil:
+                    maxIndex = i
+                    maxUtil = utility
+        print "max utility:",maxUtil
         return actions[maxIndex]
-        
-        
-        
+
+
+
+
+
         util.raiseNotDefined()
-    
+    def terminalTest(self, gameState):
+        depthBoolean = False
+        winBoolean = False
+        loseBoolean = False
+        if self.myDepth == self.depth:
+            depthBoolean = True
+            #print "reached depth"
+        if gameState.isWin():
+            winBoolean = True
+            #print "ive won"
+        if gameState.isLose():
+            loseBoolean = True
+            #print "ive lost"
+
+
+        if depthBoolean or winBoolean or loseBoolean:
+            self.myDepth = 0
+            return True
+        else:
+            return False
+            
+            
     def nextAgent(self, agentIndex, gameState):
         n = gameState.getNumAgents()
         if agentIndex == n-1:
+            self.myDepth += 1
             return 0
         else:
-            return agentIndex + 1
-        
-    
+            return agentIndex + 1   
+            
+            
     def minimax(self, agent, gameState):
-        #print "agent: ", agent
-        #print "food list: ",gameState
-        if self.myDepth == self.depth or gameState.isWin() or gameState.isLose():
-        #if self.myDepth == self.depth or gameState.getNumFood == 0 or gameState.getPacmanPosition() in ghostPositions:
-            self.myDepth = 0
-            return self.evaluationFunction(gameState)
-        
-        
         actions = gameState.getLegalActions(agent)
+
+        if self.terminalTest(gameState) or len(actions) == 0:
+            utility = self.evaluationFunction(gameState)
+            return utility
+        
         utilList = []
         for a in actions:
+            print "agent ", agent, "makes action ",a
             s = gameState.generateSuccessor(agent, a)
+            self.nodeChecks += 1
+            print "node checks: ",self.nodeChecks
+            print "my depth: ",self.myDepth
             utilList.append(self.minimax(self.nextAgent(agent, gameState),s))
-            if agent == 0: #is pacman, a max agent
-                return max(utilList)
-            else: #is ghost, a min agent
-                return min(utilList)
-        
-    
 
+        #print utilList
+        #print "agent: ", agent
+        if agent == 0: #is pacman, a max agent
+            print "ive returned a max"
+            return max(utilList)
+        else: #is ghost, a min agent
+            print "ive returned a min"
+            return min(utilList)
+            
+    def minimax2(self, agent, gameState, myPly):
+        myDepth = myPly//gameState.getNumAgents() #floor division
+
+        if myDepth == self.depth or gameState.isWin() or gameState.isLose(): #Termination Function
+            print "Terminated at depth ",myDepth," out of ",self.depth
+            utility = self.evaluationFunction(gameState)
+            return utility
+        
+        utilityList = []
+        actions = gameState.getLegalActions(agent)
+        newAgent = (agent+1)%gameState.getNumAgents() #generates new agent number
+
+        #populates list with utilities
+        for a in actions:
+            newState = gameState.generateSuccessor(agent, a)
+            utilityList.append(self.minimax2(newAgent,newState,myPly+1))
+
+        #checks if agent is max or min agent and returns max or min
+        if agent == 0:
+            return max(utilityList)
+        else:
+            return min(utilityList)
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
       Your minimax agent with alpha-beta pruning (question 3)
@@ -268,7 +354,65 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
+        myPly = 0
+        actions = gameState.getLegalActions(0)
+        maxIndex = -1
+        maxUtil = -99999
+        if len(actions) == 1:
+            return actions[0]
+        else:
+            for i in range(0,len(actions)):
+                newState = gameState.generateSuccessor(0, actions[i])
+                utility = self.alphabeta(1,newState,1,-99999,99999)
+                #print "various utility: ",utility,"various action: ",actions[i]
+                if utility > maxUtil:
+                    maxIndex = i
+                    maxUtil = utility
+        #print "max utility:",maxUtil
+        return actions[maxIndex]
         util.raiseNotDefined()
+        
+    def alphabeta(self, agent, gameState, myPly, alpha, beta):
+        myDepth = myPly//gameState.getNumAgents() #floor division
+
+        if myDepth == self.depth or gameState.isWin() or gameState.isLose(): #Termination Function
+            #print "Terminated at depth ",myDepth," out of ",self.depth
+            utility = self.evaluationFunction(gameState)
+            return utility
+        
+        
+        actions = gameState.getLegalActions(agent)
+        nodes = len(actions) #debug code
+        newAgent = (agent+1)%gameState.getNumAgents() #generates new agent number
+
+        #checks if agent is max or min agent and returns max or min
+        if agent == 0: #agent is MAX
+            v = -99999            
+            for a in actions:
+                newState = gameState.generateSuccessor(agent, a)
+                nodes -= 1 #debug code
+                v = max(v, self.alphabeta(newAgent,newState,myPly+1,alpha,beta))
+                print "beta =", beta
+                if v > beta:
+                    print "pruning triggered where v=", v, " beta =",beta, " pruned ", nodes, " nodes"
+                    return v
+                alpha = max(alpha, v)
+            return v
+            
+        else: #agent is MIN
+            v = 99999
+            for a in actions:
+
+                newState = gameState.generateSuccessor(agent, a)
+                nodes -= 1 #debug code
+                v = min(v, self.alphabeta(newAgent,newState,myPly+1, alpha, beta))
+                
+
+                if v < alpha:
+                    #print "pruning triggered where v=", v, " alpha =",alpha, " pruned ", nodes, " nodes"
+                    return v
+                beta = min(beta, v)
+            return v
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
