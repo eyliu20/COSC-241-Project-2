@@ -358,16 +358,20 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         actions = gameState.getLegalActions(0)
         maxIndex = -1
         maxUtil = -99999
+        alpha = -99999
+        beta = 99999
         if len(actions) == 1:
             return actions[0]
         else:
             for i in range(0,len(actions)):
                 newState = gameState.generateSuccessor(0, actions[i])
-                utility = self.alphabeta(1,newState,1,-99999,99999)
+                utility = self.alphabeta(1,newState,1,alpha,beta)
+                
                 #print "various utility: ",utility,"various action: ",actions[i]
                 if utility > maxUtil:
                     maxIndex = i
                     maxUtil = utility
+                    alpha = max (alpha, utility)
         #print "max utility:",maxUtil
         return actions[maxIndex]
         util.raiseNotDefined()
