@@ -386,7 +386,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         
         
         actions = gameState.getLegalActions(agent)
-        nodes = len(actions) #debug code
+        #nodes = len(actions) #debug code
         newAgent = (agent+1)%gameState.getNumAgents() #generates new agent number
 
         #checks if agent is max or min agent and returns max or min
@@ -394,11 +394,11 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             v = -99999            
             for a in actions:
                 newState = gameState.generateSuccessor(agent, a)
-                nodes -= 1 #debug code
+                #nodes -= 1 #debug code
                 v = max(v, self.alphabeta(newAgent,newState,myPly+1,alpha,beta))
-                print "beta =", beta
+                #print "beta =", beta
                 if v > beta:
-                    print "pruning triggered where v=", v, " beta =",beta, " pruned ", nodes, " nodes"
+                    #print "pruning triggered where v=", v, " beta =",beta, " pruned ", nodes, " nodes"
                     return v
                 alpha = max(alpha, v)
             return v
@@ -408,7 +408,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             for a in actions:
 
                 newState = gameState.generateSuccessor(agent, a)
-                nodes -= 1 #debug code
+                #nodes -= 1 #debug code
                 v = min(v, self.alphabeta(newAgent,newState,myPly+1, alpha, beta))
                 
 
