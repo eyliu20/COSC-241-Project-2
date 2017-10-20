@@ -201,7 +201,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        
         myPly = 0
         actions = gameState.getLegalActions(0)
         maxIndex = -1
@@ -434,38 +433,86 @@ def betterEvaluationFunction(currentGameState):
     """
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
       evaluation function (question 5).
-
       DESCRIPTION: <write something here so we know what you did>
     """
-    
+    import random
     position = currentGameState.getPacmanPosition()
     ghostPositions = currentGameState.getGhostPositions()
+    ghostStates = currentGameState.getGhostStates()
+
     utility = 0
 
     loseCondition = currentGameState.isLose()
     winCondition = currentGameState.isWin()
     foodGraph = currentGameState.getFood()
     foodList = foodGraph.asList()
+    capsuleList = currentGameState.getCapsules()
 
     if loseCondition:
         utility += (-500)
     if winCondition:
         utility += 500
     totalGhostDistance = 0
-    for g in ghostPositions:
-        totalGhostDistance+=util.manhattanDistance(position,g)
+    totalScaredDistance = 0
 
+    for i in range(0,len(ghostStates)):
+        #print "distance: ",util.manhattanDistance(position,ghostPositions[i]),"scared timer:", ghostStates[i].scaredTimer
+        distance = util.manhattanDistance(position,ghostPositions[i])
+        if ghostStates[i].scaredTimer==0:
+            #print "fleeing"
+            totalGhostDistance+=distance
+        elif ghostStates[i].scaredTimer>distance:
+            #print "chasing"
+            totalScaredDistance+=distance
+
+    """
+    for g in ghostPositions:
+         
+        totalGhostDistance+=util.manhattanDistance(position,g)
+    """
     if totalGhostDistance>0:
         utility += -2/totalGhostDistance
+    if totalScaredDistance>0:
+        utility += 100/totalScaredDistance
     if len(foodList)>0:
-        foodDistances = []
-        for food in foodList:
-            foodDistances.append(util.manhattanDistance(position,food))
+        
+        distanceToClosestFood = util.manhattanDistance(position,foodList[0])
+        foodCoord = foodList[0]
+        for i in range(1,len(foodList)):
+            myDistance = util.manhattanDistance(position,foodList[i])
+            if myDistance<distanceToClosestFood:
+                distanceToClosestFood = myDistance
+                foodCoord = foodList[i]
+        detourDistance = 0
+        if (position[0] == foodCoord[0]):
+            if position[1]<foodCoord[1]:
+                minVal = position[1]
+                maxVal = foodCoord[1]
+            else:
+                minVal = foodCoord[1]
+                maxVal = position[1]
 
-        distanceToClosestFood = min(foodDistances)
-        utility += -1*distanceToClosestFood
-    utility += -4*len(foodList)
+            for i in range(minVal,maxVal):
+                if currentGameState.hasWall(position[0],i):
+                    detourDistance = 2
+        if (position[1] == foodCoord[1]):
+            if position[0]<foodCoord[0]:
+                minVal = position[0]
+                maxVal = foodCoord[0]
+            else:
+                minVal = foodCoord[0]
+                maxVal = position[0]
 
+            for i in range(minVal,maxVal):
+                if currentGameState.hasWall(i,position[1]):
+                    detourDistance = 2
+        rand = random.uniform(0.5,1.5)
+        utility += -1*(distanceToClosestFood+detourDistance)*rand
+
+    #print "ghost state",currentGameState.getGhostState(1)
+
+    utility += -5*len(foodList)
+    utility += -100*len(capsuleList)
     utility += currentGameState.getScore()
     
 
